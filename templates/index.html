@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensitive Data Shield</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans selection:bg-brand-100 selection:text-brand-700">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between max-w-7xl">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-600 text-white p-2 rounded-lg shadow-lg shadow-brand-500/30">
+                    <i class="fas fa-shield-alt text-xl"></i>
+                </div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">DataShield</span>
+            </div>
+            <div class="text-sm text-slate-500 hidden sm:block">
+                <i class="fas fa-lock text-xs mr-1"></i> Secure Processing
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-6 animate-fade-in">
+            {% for category, message in messages %}
+            <div
+                class="p-4 rounded-xl shadow-sm border {{ 'bg-red-50 border-red-100 text-red-700' if category == 'error' else 'bg-green-50 border-green-100 text-green-700' }} flex items-center gap-3">
+                <i class="fas {{ 'fa-exclamation-circle' if category == 'error' else 'fa-check-circle' }}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form action="/" method="POST" enctype="multipart/form-data" id="maskForm"
+            class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <input type="hidden" name="action" id="formAction" value="analyze">
+            <!-- Hidden input to carry over the filename if we are in the masking phase -->
+            <input type="hidden" name="existing_filename" value="{{ filename if filename else '' }}">
+            <!-- Hidden input to carry over the file content ID -->
+            <input type="hidden" name="cache_id" value="{{ cache_id if cache_id else '' }}">
+
+            <!-- LEFT PANEL: Controls -->
+            <div class="lg:col-span-4 space-y-6">
+
+                <!-- Configuration Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h2 class="font-semibold text-slate-700">1. Configuration</h2>
+                        <a href="/" class="text-xs text-brand-600 hover:text-brand-700 font-medium">Reset</a>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Scan For</p>
+
+                        {% for key, label, icon in [
+                        ('mask_email', 'Email Addresses', 'fa-envelope'),
+                        ('mask_phone', 'Phone Numbers', 'fa-phone'),
+                        ('mask_credit_card', 'Credit Cards', 'fa-credit-card'),
+                        ('mask_ssn', 'SSN / IDs', 'fa-id-card')
+                        ] %}
+                        <label
+                            class="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-all cursor-pointer group">
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-brand-100 group-hover:text-brand-600 transition-colors">
+                                    <i class="fas {{ icon }}"></i>
+                                </span>
+                                <span class="text-sm font-medium text-slate-700">{{ label }}</span>
+                            </div>
+                            <div class="relative inline-block w-10 h-5">
+                                <input type="checkbox" name="{{ key }}" value="yes" class="peer sr-only" {% if
+                                    options.get(key) %}checked{% endif %}>
+                                <div
+                                    class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600">
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Input Source Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50">
+                        <h2 class="font-semibold text-slate-700">2. Input Source</h2>
+                    </div>
+                    <div class="p-5">
+                        <div class="relative group">
+                            <input type="file" name="file" id="fileInput"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                onchange="updateFileLabel(this)">
+                            <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center group-hover:border-brand-400 group-hover:bg-brand-50/30 transition-all"
+                                id="dropZone">
+                                <i
+                                    class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-3 group-hover:text-brand-500 transition-colors"></i>
+                                <p class="text-sm font-medium text-slate-700 mb-1" id="fileName">
+                                    {{ filename if filename else 'Drop any file here' }}
+                                </p>
+                                <p class="text-xs text-slate-400">PDF, Word, Excel, CSV, TXT supported</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            {% if not detected_items %}
+                            <button type="submit" onclick="setAction('analyze')"
+                                class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-brand-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                                <i class="fas fa-search"></i> <span>Analyze Text</span>
+                            </button>
+                            {% else %}
+                            <button type="submit" onclick="setAction('analyze')"
+                                class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-3 px-6 rounded-xl transition-all mb-3">
+                                <i class="fas fa-sync-alt mr-2"></i> Re-Analyze
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Editor & Results -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- REVIEW PANEL (Shows only after analysis, before masking) -->
+                {% if detected_items and not sanitized_text %}
+                <div
+                    class="bg-white rounded-2xl shadow-lg border border-brand-200 animate-fade-in ring-2 ring-brand-100">
+                    <div class="p-5 border-b border-slate-100 bg-brand-50/50 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="bg-brand-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">
+                                3</div>
+                            <h2 class="font-bold text-brand-900">Review Findings</h2>
+                        </div>
+                        <span class="text-xs bg-brand-200 text-brand-800 px-2 py-1 rounded-full font-bold">{{
+                            detected_items|length }} items found</span>
+                    </div>
+
+                    <div class="p-5">
+                        <p class="text-sm text-slate-600 mb-4">
+                            Select items you want to <span class="font-bold text-slate-800">IGNORE</span> (keep
+                            visible). Unchecked items will be masked.
+                        </p>
+
+                        <div
+                            class="max-h-60 overflow-y-auto custom-scrollbar border border-slate-200 rounded-xl bg-slate-50 p-2 mb-6">
+                            {% if detected_items %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {% for item in detected_items %}
+                                <label
+                                    class="flex items-center p-3 bg-white rounded-lg border border-slate-200 hover:border-brand-300 cursor-pointer transition-all">
+                                    <input type="checkbox" name="ignored_items" value="{{ item.value }}"
+                                        class="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                                    <div class="ml-3 overflow-hidden">
+                                        <p class="text-sm font-medium text-slate-700 truncate" title="{{ item.value }}">
+                                            {{ item.value }}</p>
+                                        <p class="text-[10px] uppercase font-bold text-slate-400">{{ item.type }}</p>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-8 text-slate-400">
+                                <i class="fas fa-check-circle text-2xl mb-2"></i>
+                                <p>No sensitive data found with current filters.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" onclick="setAction('mask')"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-green-500/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            <i class="fas fa-magic"></i> <span>Confirm & Mask Remaining Data</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- RESULT STATS (Only shows after masking) -->
+                {% if stats and stats.total > 0 %}
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-xs text-slate-500 uppercase font-bold mb-1">Total Redacted</div>
+                        <div class="text-2xl font-bold text-brand-600">{{ stats.total }}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-xs text-slate-500 uppercase font-bold mb-1">Emails</div>
+                        <div class="text-2xl font-bold text-slate-700">{{ stats.email }}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-xs text-slate-500 uppercase font-bold mb-1">Phones</div>
+                        <div class="text-2xl font-bold text-slate-700">{{ stats.phone }}</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-xs text-slate-500 uppercase font-bold mb-1">Others</div>
+                        <div class="text-2xl font-bold text-slate-700">{{ stats.credit_card + stats.ssn }}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Main Input/Output Container -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[600px]">
+
+                    <!-- Tabs -->
+                    <div class="flex border-b border-slate-200">
+                        <button type="button" onclick="switchTab('input')" id="tab-input"
+                            class="flex-1 py-4 text-sm font-medium border-b-2 border-brand-600 text-brand-600 bg-brand-50/50">
+                            Original Input
+                        </button>
+                        <button type="button" onclick="switchTab('output')" id="tab-output"
+                            class="flex-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+                            Sanitized Output
+                        </button>
+                    </div>
+
+                    <!-- Input View -->
+                    <div id="view-input" class="flex-1 relative group p-0">
+                        <textarea name="text_input" id="sourceText"
+                            class="w-full h-full p-6 resize-none focus:outline-none custom-scrollbar font-mono text-sm text-slate-700 bg-transparent leading-relaxed"
+                            placeholder="Paste text containing sensitive info here...&#10;Example: Contact support@company.com or call 555-123-4567."
+                            oninput="updateCharCount(this)">{{ original_text }}</textarea>
+                        <div
+                            class="absolute bottom-4 right-6 text-xs text-slate-400 bg-white/80 backdrop-blur px-2 py-1 rounded-md border border-slate-200">
+                            <span id="charCount">0</span> chars
+                        </div>
+                    </div>
+
+                    <!-- Output View -->
+                    <div id="view-output" class="flex-1 relative hidden bg-slate-50/50">
+                        <textarea id="outputArea" readonly
+                            class="w-full h-full p-6 resize-none focus:outline-none custom-scrollbar font-mono text-sm text-slate-600 bg-transparent leading-relaxed">{{ sanitized_text }}</textarea>
+
+                        {% if not sanitized_text %}
+                        <div
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 pointer-events-none">
+                            <i class="fas fa-eye-slash text-4xl mb-3 opacity-20"></i>
+                            <span class="text-sm">Processed text will appear here</span>
+                        </div>
+                        {% else %}
+                        <!-- Floating Actions -->
+                        <div class="absolute bottom-6 right-6 flex gap-2">
+                            {% if download_id %}
+                            <a href="/download/{{ download_id }}"
+                                class="bg-white hover:bg-slate-50 text-brand-700 border border-brand-200 shadow-sm px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                                <i class="fas fa-file-download"></i> Download File
+                            </a>
+                            {% endif %}
+                            <button type="button" onclick="copyToClipboard()"
+                                class="bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-500/30 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                                <i class="fas fa-copy"></i> Copy Text
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function setAction(actionName) {
+            document.getElementById('formAction').value = actionName;
+        }
+
+        function switchTab(tabName) {
+            const inputView = document.getElementById('view-input');
+            const outputView = document.getElementById('view-output');
+            const inputTab = document.getElementById('tab-input');
+            const outputTab = document.getElementById('tab-output');
+
+            if (tabName === 'input') {
+                inputView.classList.remove('hidden');
+                outputView.classList.add('hidden');
+                inputTab.classList.add('border-brand-600', 'text-brand-600', 'bg-brand-50/50');
+                inputTab.classList.remove('border-transparent', 'text-slate-500');
+                outputTab.classList.remove('border-brand-600', 'text-brand-600', 'bg-brand-50/50');
+                outputTab.classList.add('border-transparent', 'text-slate-500');
+            } else {
+                inputView.classList.add('hidden');
+                outputView.classList.remove('hidden');
+                outputTab.classList.add('border-brand-600', 'text-brand-600', 'bg-brand-50/50');
+                outputTab.classList.remove('border-transparent', 'text-slate-500');
+                inputTab.classList.remove('border-brand-600', 'text-brand-600', 'bg-brand-50/50');
+                inputTab.classList.add('border-transparent', 'text-slate-500');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hasResult = "{{ sanitized_text|length > 0 }}";
+            if (hasResult === "True") {
+                switchTab('output');
+            }
+            updateCharCount(document.getElementById('sourceText'));
+        });
+
+        function updateFileLabel(input) {
+            const fileName = input.files[0]?.name || "Drop any file here";
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('dropZone').classList.add('border-brand-500', 'bg-brand-50/50');
+        }
+
+        function updateCharCount(textarea) {
+            document.getElementById('charCount').textContent = textarea.value.length;
+        }
+
+        function copyToClipboard() {
+            var copyText = document.getElementById("outputArea");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                const btn = event.currentTarget;
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => btn.innerHTML = originalHTML, 2000);
+            });
+        }
+    </script>
+</body>
+
+</html>
