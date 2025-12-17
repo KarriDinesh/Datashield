@@ -19,7 +19,6 @@ A Flask-based web application for detecting and masking sensitive personal infor
 1. Clone the repository:
 ```bash
 git clone https://github.com/KarriDinesh/Datashield.git
-cd masking
 ```
 
 2. Create a virtual environment:
