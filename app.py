@@ -5,9 +5,6 @@ import uuid
 import copy
 from flask import Flask, request, render_template, flash, redirect, url_for, send_file, session
 
-# ==========================================
-# OPTIONAL DEPENDENCIES
-# ==========================================
 
 # 1. PDF Support
 try:
@@ -33,15 +30,9 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = 'Masker'
 
-# In-memory storage for processed files (for demo purposes)
-# In production, use a proper temp file system or S3
 PROCESSED_FILES = {}
 UPLOAD_CACHE = {} # Cache to hold uploaded files during the "Analyze" step
 
-
-# ==========================================
-# BACKEND LOGIC
-# ==========================================
 
 PATTERNS = {
     'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
@@ -126,8 +117,6 @@ def mask_content_and_reconstruct_file(text_input, file_bytes, filename, options,
         processed_file_name = f"masked_{filename}"
         is_processed = False
         
-        # We use a separate stats dict or just ignore stats here to prevent double counting
-        # in the UI (since UI shows stats from the text analysis above)
         dummy_stats = { 'email': 0, 'phone': 0, 'credit_card': 0, 'ssn': 0, 'total': 0 }
         
         try:
@@ -230,9 +219,6 @@ def index():
         # Variables to hold file content
         file_bytes = None
         
-        # ----------------------------------------------------
-        # 1. HANDLE NEW FILE UPLOAD (ANALYZE STEP)
-        # ----------------------------------------------------
         if 'file' in request.files and request.files['file'].filename != '':
             file = request.files['file']
             filename = file.filename
@@ -306,9 +292,6 @@ def index():
             except Exception as e:
                 flash(f"Error reading file: {str(e)}", "error")
         
-        # ----------------------------------------------------
-        # 2. HANDLE EXISTING TEXT / CACHED FILE (MASK STEP)
-        # ----------------------------------------------------
         else:
             original_text = request.form.get('text_input', '')
             filename = request.form.get('existing_filename', '')
@@ -337,8 +320,6 @@ def index():
                     original_text, file_bytes, filename, options, ignored_items
                 )
                 
-                # Optional: clear cache after successful mask to free memory
-                # In a real app, you might keep it for a session duration or use a TTL
                 if cache_id and cache_id in UPLOAD_CACHE:
                     del UPLOAD_CACHE[cache_id]
                     cache_id = None
