@@ -14,6 +14,10 @@ A Flask-based web application for detecting and masking sensitive personal infor
   - Excel spreadsheets (.xlsx)
   - Plain text
 
+## User Interface
+
+![Image Preview](image.png)
+
 ## Installation
 
 1. Clone the repository:
